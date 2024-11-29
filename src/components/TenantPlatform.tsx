@@ -137,12 +137,7 @@ export default function TenantPlatform() {
   const { toast } = useToast()
   const [showPhotoComparison, setShowPhotoComparison] = useState(false)
   const [comparisonScore, setComparisonScore] = useState<number | null>(null)
-
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const { toast } = useToast()
-
+  
   const startCamera = useCallback(async () => {
     try {
       if (!containerRef.current) return;
