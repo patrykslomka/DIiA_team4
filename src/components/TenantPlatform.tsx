@@ -139,11 +139,22 @@ export default function TenantPlatform() {
 
   const startCamera = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
-      })
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: window.innerWidth },
+          height: { ideal: window.innerHeight }
+        }
+      });
+      
       if (videoRef.current) {
-        videoRef.current.srcObject = stream
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          if (canvasRef.current && videoRef.current) {
+            canvasRef.current.width = videoRef.current.videoWidth;
+            canvasRef.current.height = videoRef.current.videoHeight;
+          }
+        };
       }
 
       navigator.geolocation.getCurrentPosition(
@@ -151,34 +162,35 @@ export default function TenantPlatform() {
           setLocation({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude
-          })
+          });
           toast({
             title: "Location accessed",
             description: "Your location has been successfully captured.",
             variant: "default",
-          })
+          });
         },
         (error) => {
-          console.error("Geolocation error:", error)
+          console.error("Geolocation error:", error);
           toast({
             title: "Location Error",
             description: "Unable to access your location. Some features may be limited.",
             variant: "destructive",
-          })
+          });
         }
-      )
+      );
     } catch (error) {
       const errorMessage = error instanceof Error 
         ? error.message 
-        : 'Unknown error occurred while accessing camera'
+        : 'Unknown error occurred while accessing camera';
       
+      console.error("Camera initialization error:", errorMessage);
       toast({
         title: "Camera Error",
         description: `Unable to access camera: ${errorMessage}`,
         variant: "destructive",
-      })
+      });
     }
-  }, [toast])
+  }, [toast]);
 
   const stopCamera = useCallback(() => {
     if (videoRef.current && videoRef.current.srcObject) {
@@ -516,38 +528,34 @@ export default function TenantPlatform() {
       </CardContent>
     </Card>,
     // Step 3: Capture Photo
-    <Card key="capture" className="w-full max-w-md mx-auto h-[100vh] flex flex-col">
-      <CardHeader className="flex-shrink-0 py-2">
-        <CardTitle className="text-lg">Capture Photo</CardTitle>
-        <CardDescription className="text-sm">Please take a photo of the issue</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-grow p-0 relative">
-        <div className="absolute inset-0 bg-muted">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            className="w-full h-full object-cover"
-          />
-        </div>
-      </CardContent>
-      <CardFooter className="flex-shrink-0 p-2">
-        <div className="w-full space-y-2">
-          <Button onClick={capturePhoto} className="w-full">
-            <Camera className="mr-2 h-4 w-4" /> Capture Photo
-          </Button>
-          {location ? (
-            <div className="flex items-center justify-center text-sm text-green-600">
-              <MapPin className="mr-1 h-4 w-4" /> Location captured
-            </div>
-          ) : (
-            <div className="flex items-center justify-center text-sm text-yellow-600">
-              <MapPin className="mr-1 h-4 w-4" /> Accessing location...
-            </div>
-          )}
-        </div>
-      </CardFooter>
-    </Card>,
+    <div key="capture" className="fixed inset-0 flex flex-col bg-background">
+      <div className="flex-shrink-0 p-4 bg-background z-10">
+        <h2 className="text-lg font-semibold">Capture Photo</h2>
+        <p className="text-sm text-muted-foreground">Please take a photo of the issue</p>
+      </div>
+      <div className="relative flex-grow overflow-hidden">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      </div>
+      <div className="flex-shrink-0 p-4 bg-background z-10">
+        <Button onClick={capturePhoto} className="w-full mb-2">
+          <Camera className="mr-2 h-4 w-4" /> Capture Photo
+        </Button>
+        {location ? (
+          <div className="flex items-center justify-center text-sm text-green-600">
+            <MapPin className="mr-1 h-4 w-4" /> Location captured
+          </div>
+        ) : (
+          <div className="flex items-center justify-center text-sm text-yellow-600">
+            <MapPin className="mr-1 h-4 w-4" /> Accessing location...
+          </div>
+        )}
+      </div>
+    </div>,
     // Step 4: Photo Comparison
     <Card key="comparison" className="w-full max-w-md mx-auto">
       <CardHeader>
