@@ -551,8 +551,8 @@ export default function TenantPlatform() {
         <CardTitle className="text-lg">Capture Photo</CardTitle>
         <CardDescription className="text-sm">Please take a photo of the issue</CardDescription>
       </CardHeader>
-      <CardContent className="flex-grow p-0 relative" ref={containerRef}>
-        <div className="absolute inset-0 bg-muted">
+      <CardContent className="flex-grow p-2 relative" ref={containerRef}>
+        <div className="w-full h-full bg-muted rounded-lg overflow-hidden">
           <video
             ref={videoRef}
             autoPlay
