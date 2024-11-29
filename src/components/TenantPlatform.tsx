@@ -68,14 +68,14 @@ const tenantAccounts: TenantAccount[] = [
     password: "pass4",
     name: "Vietlinh 1",
     address: "Academialaan 5, Tilburg",
-    referenceImages: ["/images/t3-ref1.png", "/images/t3-ref2.png"]
+    referenceImages: ["/images/Vietlinh/vietlinh1.png", "/images/Vietlinh/vietlinh2.png", "/images/Vietlinh/vietlinh3.png", "/images/Vietlinh/vietlinh4.png", "/images/Vietlinh/vietlinh5.png"]
   },
   {
     email: "t5@kw.com",
     password: "pass5",
     name: "Vietlinh 2",
     address: "Duurstraat 10, Eindhoven",
-    referenceImages: ["/images/t3-ref1.png", "/images/t3-ref2.png"]
+    referenceImages: ["/images/vietlinh1_2.png", "/images/vietlinh2_2.png", "/images/vietlinh3_2.png", "/images/vietlinh4_2.png", "/images/vietlinh5_2.png"]
   },
   {
     email: "t6@kw.com",
@@ -139,11 +139,27 @@ export default function TenantPlatform() {
 
   const startCamera = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
-      })
+      // Request highest possible resolution
+      const constraints = {
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 4096 }, // Request maximum resolution
+          height: { ideal: 2160 }, // 4K resolution if available
+          aspectRatio: 4/3 // Maintain standard photo aspect ratio
+        }
+      };
+      
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       if (videoRef.current) {
-        videoRef.current.srcObject = stream
+        videoRef.current.srcObject = stream;
+        
+        // Set canvas size to match video dimensions once we know them
+        videoRef.current.onloadedmetadata = () => {
+          if (canvasRef.current && videoRef.current) {
+            canvasRef.current.width = videoRef.current.videoWidth;
+            canvasRef.current.height = videoRef.current.videoHeight;
+          }
+        };
       }
 
       navigator.geolocation.getCurrentPosition(
@@ -188,24 +204,38 @@ export default function TenantPlatform() {
     }
   }, [])
 
-  const [capturedImageBlob, setCapturedImageBlob] = useState<Blob | null>(null)
-
-  const capturePhoto = () => {
+  const capturePhoto = useCallback(() => {
     if (videoRef.current && canvasRef.current) {
-      const context = canvasRef.current.getContext('2d')
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      
+      // Ensure canvas dimensions match video dimensions
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const context = canvas.getContext('2d');
       if (context) {
-        context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height)
-        canvasRef.current.toBlob((blob) => {
-          if (blob) {
-            setCapturedImageBlob(blob)
-            setSelectedFile(new File([blob], "captured-photo.jpg", { type: "image/jpeg" }))
-            stopCamera()
-            setCurrentStep(currentStep + 1)
-          }
-        }, 'image/jpeg')
+        // Capture at full resolution
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // Convert to blob with maximum quality
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const file = new File([blob], `photo_${Date.now()}.jpg`, {
+                type: 'image/jpeg'
+              });
+              setSelectedFile(file);
+              stopCamera();
+              setCurrentStep(currentStep + 1);
+            }
+          },
+          'image/jpeg',
+          1.0 // Maximum quality
+        );
       }
     }
-  }
+  }, [currentStep, stopCamera]);
 
   const handleLogin = (event: React.FormEvent) => {
     event.preventDefault()
