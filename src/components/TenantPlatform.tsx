@@ -516,21 +516,23 @@ export default function TenantPlatform() {
       </CardContent>
     </Card>,
     // Step 3: Capture Photo
-    <Card key="capture" className="w-full max-w-md mx-auto">
-      <CardHeader className="pb-2">
-        <CardTitle>Capture Photo</CardTitle>
-        <CardDescription>Please take a photo of the issue</CardDescription>
+    <Card key="capture" className="w-full max-w-md mx-auto h-[100vh] flex flex-col">
+      <CardHeader className="flex-shrink-0 py-2">
+        <CardTitle className="text-lg">Capture Photo</CardTitle>
+        <CardDescription className="text-sm">Please take a photo of the issue</CardDescription>
       </CardHeader>
-      <CardContent className="p-0">
-        <div className="relative w-full h-[calc(100vh-240px)] bg-muted">
+      <CardContent className="flex-grow p-0 relative">
+        <div className="absolute inset-0 bg-muted">
           <video
             ref={videoRef}
             autoPlay
             playsInline
-            className="absolute inset-0 w-full h-full object-cover"
+            className="w-full h-full object-cover"
           />
         </div>
-        <div className="p-4 space-y-4">
+      </CardContent>
+      <CardFooter className="flex-shrink-0 p-2">
+        <div className="w-full space-y-2">
           <Button onClick={capturePhoto} className="w-full">
             <Camera className="mr-2 h-4 w-4" /> Capture Photo
           </Button>
@@ -544,7 +546,7 @@ export default function TenantPlatform() {
             </div>
           )}
         </div>
-      </CardContent>
+      </CardFooter>
     </Card>,
     // Step 4: Photo Comparison
     <Card key="comparison" className="w-full max-w-md mx-auto">
