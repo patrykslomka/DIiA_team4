@@ -133,17 +133,23 @@ export default function TenantPlatform() {
   const [currentReferenceImageIndex, setCurrentReferenceImageIndex] = useState(0)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
   const [showPhotoComparison, setShowPhotoComparison] = useState(false)
   const [comparisonScore, setComparisonScore] = useState<number | null>(null)
 
   const startCamera = useCallback(async () => {
     try {
+      if (!containerRef.current) return;
+
+      const containerWidth = containerRef.current.clientWidth;
+      const containerHeight = containerRef.current.clientHeight;
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'environment',
-          width: { ideal: window.innerWidth },
-          height: { ideal: window.innerHeight }
+          width: { ideal: containerWidth },
+          height: { ideal: containerHeight }
         }
       });
       
@@ -194,30 +200,42 @@ export default function TenantPlatform() {
 
   const stopCamera = useCallback(() => {
     if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks()
-      tracks.forEach(track => track.stop())
-      videoRef.current.srcObject = null
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach(track => track.stop());
+      videoRef.current.srcObject = null;
     }
-  }, [])
+  }, []);
 
-  const [capturedImageBlob, setCapturedImageBlob] = useState<Blob | null>(null)
-
-  const capturePhoto = () => {
+  const capturePhoto = useCallback(() => {
     if (videoRef.current && canvasRef.current) {
-      const context = canvasRef.current.getContext('2d')
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const context = canvas.getContext('2d');
       if (context) {
-        context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height)
-        canvasRef.current.toBlob((blob) => {
-          if (blob) {
-            setCapturedImageBlob(blob)
-            setSelectedFile(new File([blob], "captured-photo.jpg", { type: "image/jpeg" }))
-            stopCamera()
-            setCurrentStep(currentStep + 1)
-          }
-        }, 'image/jpeg')
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const file = new File([blob], `photo_${Date.now()}.jpg`, {
+                type: 'image/jpeg'
+              });
+              setSelectedFile(file);
+              stopCamera();
+              setCurrentStep(currentStep + 1);
+            }
+          },
+          'image/jpeg',
+          1.0 // Maximum quality
+        );
       }
     }
-  }
+  }, [currentStep, stopCamera, setSelectedFile, setCurrentStep]);
+
 
   const handleLogin = (event: React.FormEvent) => {
     event.preventDefault()
@@ -528,34 +546,38 @@ export default function TenantPlatform() {
       </CardContent>
     </Card>,
     // Step 3: Capture Photo
-    <div key="capture" className="fixed inset-0 flex flex-col bg-background">
-      <div className="flex-shrink-0 p-4 bg-background z-10">
-        <h2 className="text-lg font-semibold">Capture Photo</h2>
-        <p className="text-sm text-muted-foreground">Please take a photo of the issue</p>
-      </div>
-      <div className="relative flex-grow overflow-hidden">
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-      </div>
-      <div className="flex-shrink-0 p-4 bg-background z-10">
-        <Button onClick={capturePhoto} className="w-full mb-2">
-          <Camera className="mr-2 h-4 w-4" /> Capture Photo
-        </Button>
-        {location ? (
-          <div className="flex items-center justify-center text-sm text-green-600">
-            <MapPin className="mr-1 h-4 w-4" /> Location captured
-          </div>
-        ) : (
-          <div className="flex items-center justify-center text-sm text-yellow-600">
-            <MapPin className="mr-1 h-4 w-4" /> Accessing location...
-          </div>
-        )}
-      </div>
-    </div>,
+    <Card key="capture" className="w-full max-w-md mx-auto h-[calc(100vh-2rem)] flex flex-col">
+      <CardHeader className="flex-shrink-0 py-2">
+        <CardTitle className="text-lg">Capture Photo</CardTitle>
+        <CardDescription className="text-sm">Please take a photo of the issue</CardDescription>
+      </CardHeader>
+      <CardContent className="flex-grow p-0 relative" ref={containerRef}>
+        <div className="absolute inset-0 bg-muted">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            className="w-full h-full object-cover"
+          />
+        </div>
+      </CardContent>
+      <CardFooter className="flex-shrink-0 p-2">
+        <div className="w-full space-y-2">
+          <Button onClick={capturePhoto} className="w-full">
+            <Camera className="mr-2 h-4 w-4" /> Capture Photo
+          </Button>
+          {location ? (
+            <div className="flex items-center justify-center text-sm text-green-600">
+              <MapPin className="mr-1 h-4 w-4" /> Location captured
+            </div>
+          ) : (
+            <div className="flex items-center justify-center text-sm text-yellow-600">
+              <MapPin className="mr-1 h-4 w-4" /> Accessing location...
+            </div>
+          )}
+        </div>
+      </CardFooter>
+    </Card>,
     // Step 4: Photo Comparison
     <Card key="comparison" className="w-full max-w-md mx-auto">
       <CardHeader>
