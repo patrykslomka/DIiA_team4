@@ -139,11 +139,24 @@ export default function TenantPlatform() {
 
   const startCamera = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
-      })
+      // Request the maximum resolution supported by the device
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 4096 },
+          height: { ideal: 2160 },
+        }
+      });
+      
       if (videoRef.current) {
-        videoRef.current.srcObject = stream
+        videoRef.current.srcObject = stream;
+        
+        videoRef.current.onloadedmetadata = () => {
+          if (canvasRef.current && videoRef.current) {
+            canvasRef.current.width = videoRef.current.videoWidth;
+            canvasRef.current.height = videoRef.current.videoHeight;
+          }
+        };
       }
 
       navigator.geolocation.getCurrentPosition(
@@ -172,6 +185,7 @@ export default function TenantPlatform() {
         ? error.message 
         : 'Unknown error occurred while accessing camera'
       
+      console.error("Camera initialization error:", errorMessage)
       toast({
         title: "Camera Error",
         description: `Unable to access camera: ${errorMessage}`,
@@ -188,24 +202,53 @@ export default function TenantPlatform() {
     }
   }, [])
 
-  const [capturedImageBlob, setCapturedImageBlob] = useState<Blob | null>(null)
-
-  const capturePhoto = () => {
+  const capturePhoto = useCallback(() => {
     if (videoRef.current && canvasRef.current) {
-      const context = canvasRef.current.getContext('2d')
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const context = canvas.getContext('2d');
       if (context) {
-        context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height)
-        canvasRef.current.toBlob((blob) => {
-          if (blob) {
-            setCapturedImageBlob(blob)
-            setSelectedFile(new File([blob], "captured-photo.jpg", { type: "image/jpeg" }))
-            stopCamera()
-            setCurrentStep(currentStep + 1)
-          }
-        }, 'image/jpeg')
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const file = new File([blob], `photo_${Date.now()}.jpg`, {
+                type: 'image/jpeg'
+              });
+              setSelectedFile(file);
+              stopCamera();
+              setCurrentStep(currentStep + 1);
+            } else {
+              toast({
+                title: "Photo Capture Error",
+                description: "Failed to create image file. Please try again.",
+                variant: "destructive",
+              });
+            }
+          },
+          'image/jpeg',
+          1.0 // Maximum quality
+        );
+      } else {
+        toast({
+          title: "Photo Capture Error",
+          description: "Failed to get canvas context. Please try again.",
+          variant: "destructive",
+        });
       }
+    } else {
+      toast({
+        title: "Photo Capture Error",
+        description: "Video or canvas element not found. Please try again.",
+        variant: "destructive",
+      });
     }
-  }
+  }, [currentStep, stopCamera, setSelectedFile, setCurrentStep, toast]);
 
   const handleLogin = (event: React.FormEvent) => {
     event.preventDefault()
@@ -517,30 +560,35 @@ export default function TenantPlatform() {
     </Card>,
     // Step 3: Capture Photo
     <Card key="capture" className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Capture Photo</CardTitle>
-        <CardDescription>Please take a photo of the issue</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-          <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-        </div>
-        <div className="flex justify-between items-center">
-          <Button onClick={capturePhoto}>
-            <Camera className="mr-2 h-4 w-4" /> Capture Photo
-          </Button>
-          {location ? (
-            <div className="flex items-center text-sm text-green-600">
-              <MapPin className="mr-1 h-4 w-4" /> Location captured
-            </div>
-          ) : (
-            <div className="flex items-center text-sm text-yellow-600">
-              <MapPin className="mr-1 h-4 w-4" /> Accessing location...
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>,
+    <CardHeader>
+      <CardTitle>Capture Photo</CardTitle>
+      <CardDescription>Please take a photo of the issue</CardDescription>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      <div className="relative w-full h-[calc(100vh-300px)] min-h-[400px] bg-muted rounded-lg overflow-hidden">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      </div>
+      <div className="flex justify-between items-center">
+        <Button onClick={capturePhoto} className="w-full">
+          <Camera className="mr-2 h-4 w-4" /> Capture Photo
+        </Button>
+        {location ? (
+          <div className="flex items-center text-sm text-green-600 ml-4">
+            <MapPin className="mr-1 h-4 w-4" /> Location captured
+          </div>
+        ) : (
+          <div className="flex items-center text-sm text-yellow-600 ml-4">
+            <MapPin className="mr-1 h-4 w-4" /> Accessing location...
+          </div>
+        )}
+      </div>
+    </CardContent>
+  </Card>,
     // Step 4: Photo Comparison
     <Card key="comparison" className="w-full max-w-md mx-auto">
       <CardHeader>
