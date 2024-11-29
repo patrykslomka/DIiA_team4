@@ -81,7 +81,7 @@ const tenantAccounts: TenantAccount[] = [
     email: "t6@kw.com",
     password: "pass6",
     name: "Hanyue 1",
-    address: "JADS, den Bosch",
+    address: "JADS, Eindhoven",
     referenceImages: ["/images/t3-ref1.png", "/images/t3-ref2.png"]
   },
   {
