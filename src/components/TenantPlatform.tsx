@@ -138,6 +138,11 @@ export default function TenantPlatform() {
   const [showPhotoComparison, setShowPhotoComparison] = useState(false)
   const [comparisonScore, setComparisonScore] = useState<number | null>(null)
 
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const { toast } = useToast()
+
   const startCamera = useCallback(async () => {
     try {
       if (!containerRef.current) return;
@@ -543,12 +548,12 @@ export default function TenantPlatform() {
       </CardContent>
     </Card>,
     // Step 3: Capture Photo
-    <Card key="capture" className="w-full max-w-md mx-auto h-[100vh] max-h-[800px] flex flex-col overflow-hidden">
-      <CardHeader className="flex-shrink-0 py-4">
-        <CardTitle className="text-xl">Capture Photo</CardTitle>
+    <Card key="capture" className="w-full max-w-md mx-auto h-[85vh] flex flex-col overflow-hidden my-4">
+      <CardHeader className="flex-shrink-0 py-3">
+        <CardTitle className="text-lg">Capture Photo</CardTitle>
         <CardDescription className="text-sm">Please take a photo of the issue</CardDescription>
       </CardHeader>
-      <CardContent className="flex-grow p-4 relative" ref={containerRef}>
+      <CardContent className="flex-grow p-3 relative" ref={containerRef}>
         <div className="w-full h-full bg-muted rounded-lg overflow-hidden relative">
           <video
             ref={videoRef}
@@ -558,8 +563,8 @@ export default function TenantPlatform() {
           />
         </div>
       </CardContent>
-      <CardFooter className="flex-shrink-0 py-4">
-        <div className="w-full space-y-4">
+      <CardFooter className="flex-shrink-0 py-3">
+        <div className="w-full space-y-2">
           <Button onClick={capturePhoto} className="w-full">
             <Camera className="mr-2 h-4 w-4" /> Capture Photo
           </Button>
