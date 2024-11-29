@@ -142,14 +142,11 @@ export default function TenantPlatform() {
     try {
       if (!containerRef.current) return;
 
-      const containerWidth = containerRef.current.clientWidth;
-      const containerHeight = containerRef.current.clientHeight;
-
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'environment',
-          width: { ideal: containerWidth },
-          height: { ideal: containerHeight }
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
         }
       });
       
@@ -546,23 +543,23 @@ export default function TenantPlatform() {
       </CardContent>
     </Card>,
     // Step 3: Capture Photo
-    <Card key="capture" className="w-full max-w-md mx-auto h-[calc(100vh-2rem)] flex flex-col">
-      <CardHeader className="flex-shrink-0 py-2">
-        <CardTitle className="text-lg">Capture Photo</CardTitle>
+    <Card key="capture" className="w-full max-w-md mx-auto h-[100vh] max-h-[800px] flex flex-col overflow-hidden">
+      <CardHeader className="flex-shrink-0 py-4">
+        <CardTitle className="text-xl">Capture Photo</CardTitle>
         <CardDescription className="text-sm">Please take a photo of the issue</CardDescription>
       </CardHeader>
-      <CardContent className="flex-grow p-2 relative" ref={containerRef}>
-        <div className="w-full h-full bg-muted rounded-lg overflow-hidden">
+      <CardContent className="flex-grow p-4 relative" ref={containerRef}>
+        <div className="w-full h-full bg-muted rounded-lg overflow-hidden relative">
           <video
             ref={videoRef}
             autoPlay
             playsInline
-            className="w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover"
           />
         </div>
       </CardContent>
-      <CardFooter className="flex-shrink-0 p-2">
-        <div className="w-full space-y-2">
+      <CardFooter className="flex-shrink-0 py-4">
+        <div className="w-full space-y-4">
           <Button onClick={capturePhoto} className="w-full">
             <Camera className="mr-2 h-4 w-4" /> Capture Photo
           </Button>
