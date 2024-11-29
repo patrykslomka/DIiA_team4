@@ -139,27 +139,11 @@ export default function TenantPlatform() {
 
   const startCamera = useCallback(async () => {
     try {
-      // Request highest possible resolution
-      const constraints = {
-        video: {
-          facingMode: 'environment',
-          width: { ideal: 4096 }, // Request maximum resolution
-          height: { ideal: 2160 }, // 4K resolution if available
-          aspectRatio: 4/3 // Maintain standard photo aspect ratio
-        }
-      };
-      
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      })
       if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        
-        // Set canvas size to match video dimensions once we know them
-        videoRef.current.onloadedmetadata = () => {
-          if (canvasRef.current && videoRef.current) {
-            canvasRef.current.width = videoRef.current.videoWidth;
-            canvasRef.current.height = videoRef.current.videoHeight;
-          }
-        };
+        videoRef.current.srcObject = stream
       }
 
       navigator.geolocation.getCurrentPosition(
@@ -204,38 +188,24 @@ export default function TenantPlatform() {
     }
   }, [])
 
-  const capturePhoto = useCallback(() => {
+  const [capturedImageBlob, setCapturedImageBlob] = useState<Blob | null>(null)
+
+  const capturePhoto = () => {
     if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      
-      // Ensure canvas dimensions match video dimensions
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      const context = canvas.getContext('2d');
+      const context = canvasRef.current.getContext('2d')
       if (context) {
-        // Capture at full resolution
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-        // Convert to blob with maximum quality
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              const file = new File([blob], `photo_${Date.now()}.jpg`, {
-                type: 'image/jpeg'
-              });
-              setSelectedFile(file);
-              stopCamera();
-              setCurrentStep(currentStep + 1);
-            }
-          },
-          'image/jpeg',
-          1.0 // Maximum quality
-        );
+        context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height)
+        canvasRef.current.toBlob((blob) => {
+          if (blob) {
+            setCapturedImageBlob(blob)
+            setSelectedFile(new File([blob], "captured-photo.jpg", { type: "image/jpeg" }))
+            stopCamera()
+            setCurrentStep(currentStep + 1)
+          }
+        }, 'image/jpeg')
       }
     }
-  }, [currentStep, stopCamera]);
+  }
 
   const handleLogin = (event: React.FormEvent) => {
     event.preventDefault()
