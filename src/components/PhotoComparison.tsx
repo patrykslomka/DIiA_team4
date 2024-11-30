@@ -132,7 +132,7 @@ export function PhotoComparison({
             : 'bg-destructive/10 text-destructive'
         }`}>
           <div className="font-semibold">
-            {comparisonMessage.toLowerCase().includes('great picture') ? 'Great Picture!' : 'Photo Needs Adjustment'}
+            {comparisonMessage.toLowerCase().includes('great picture') ? 'Photo Needs No Adjustments!' : 'Photo Needs Adjustment'}
           </div>
           <div className="text-sm">
             {comparisonMessage}
