@@ -88,16 +88,16 @@ export function PhotoComparison({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+    <div className="space-y-6">
+      <div className="space-y-6">
         <div>
           <h3 className="text-lg font-semibold mb-2">Reference Image</h3>
-          <div className="relative aspect-video bg-muted">
+          <div className="relative aspect-video w-full max-w-2xl mx-auto bg-muted">
             <Image
               src={referenceImageSrc}
               alt="Reference"
               fill
-              className="object-cover rounded-lg"
+              className="object-contain rounded-lg"
               priority
               unoptimized
             />
@@ -105,12 +105,12 @@ export function PhotoComparison({
         </div>
         <div>
           <h3 className="text-lg font-semibold mb-2">Your Photo</h3>
-          <div className="relative aspect-video bg-muted">
+          <div className="relative aspect-video w-full max-w-2xl mx-auto bg-muted">
             <Image
               src={capturedImageUrl}
               alt="Captured"
               fill
-              className="object-cover rounded-lg"
+              className="object-contain rounded-lg"
               priority
               unoptimized
             />

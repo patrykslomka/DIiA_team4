@@ -142,14 +142,37 @@ export default function TenantPlatform() {
     try {
       if (!containerRef.current) return;
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment',
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+      // Define an array of video constraints, from highest to lowest quality
+      const videoConstraints = [
+        { width: { ideal: 3840 }, height: { ideal: 2160 } }, // 4K
+        { width: { ideal: 1920 }, height: { ideal: 1080 } }, // Full HD
+        { width: { ideal: 1280 }, height: { ideal: 720 } },  // HD
+        { width: { ideal: 640 }, height: { ideal: 480 } },   // VGA
+        {}  // Default: let the browser decide
+      ];
+
+      let stream: MediaStream | null = null;
+
+      // Try each constraint until we get a stream
+      for (const constraint of videoConstraints) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: 'environment',
+              ...constraint
+            }
+          });
+          break; // If successful, exit the loop
+        } catch (err) {
+          console.log(`Failed to get stream with constraint:`, constraint, err);
+          // Continue to the next constraint
         }
-      });
-      
+      }
+
+      if (!stream) {
+        throw new Error('Unable to access camera with any of the provided constraints');
+      }
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
@@ -159,6 +182,11 @@ export default function TenantPlatform() {
           }
         };
       }
+
+      // Log the actual video dimensions
+      const videoTrack = stream.getVideoTracks()[0];
+      const settings = videoTrack.getSettings();
+      console.log(`Actual video dimensions: ${settings.width}x${settings.height}`);
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -218,15 +246,15 @@ export default function TenantPlatform() {
         canvas.toBlob(
           (blob) => {
             if (blob) {
-              const file = new File([blob], `photo_${Date.now()}.jpg`, {
-                type: 'image/jpeg'
+              const file = new File([blob], `photo_${Date.now()}.png`, {
+                type: 'image/png'
               });
               setSelectedFile(file);
               stopCamera();
               setCurrentStep(currentStep + 1);
             }
           },
-          'image/jpeg',
+          'image/png',
           1.0 // Maximum quality
         );
       }
