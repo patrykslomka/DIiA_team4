@@ -70,7 +70,8 @@ export function PhotoComparison({
       }
 
       setComparisonMessage(data.message)
-      onComparisonComplete(data.message)
+      // Remove this line:
+      //onComparisonComplete(data.message)
     } catch (error) {
       console.error('Error comparing images:', error)
       setError(error instanceof Error ? error.message : 'Failed to compare images. Please try again.')
@@ -125,11 +126,18 @@ export function PhotoComparison({
         {isComparing ? 'Comparing...' : 'Compare Images'}
       </Button>
       {comparisonMessage && (
-        <Alert variant={comparisonMessage.toLowerCase().includes('dark') ? "destructive" : "default"}>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Photo Analysis Result</AlertTitle>
-          <AlertDescription>{comparisonMessage}</AlertDescription>
-        </Alert>
+        <div className={`mt-4 p-4 rounded-lg ${
+          comparisonMessage.toLowerCase().includes('great picture') 
+            ? 'bg-green-100 text-green-700' 
+            : 'bg-destructive/10 text-destructive'
+        }`}>
+          <div className="font-semibold">
+            {comparisonMessage.toLowerCase().includes('great picture') ? 'Great Picture!' : 'Photo Needs Adjustment'}
+          </div>
+          <div className="text-sm">
+            {comparisonMessage}
+          </div>
+        </div>
       )}
       {error && (
         <Alert variant="destructive">
