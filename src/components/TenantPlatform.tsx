@@ -140,88 +140,46 @@ export default function TenantPlatform() {
   
   const startCamera = useCallback(async () => {
     try {
-      if (!containerRef.current) return;
-
-      // Define an array of video constraints, from highest to lowest quality
-      const videoConstraints = [
-        { width: { ideal: 3840 }, height: { ideal: 2160 } }, // 4K
-        { width: { ideal: 1920 }, height: { ideal: 1080 } }, // Full HD
-        { width: { ideal: 1280 }, height: { ideal: 720 } },  // HD
-        { width: { ideal: 640 }, height: { ideal: 480 } },   // VGA
-        {}  // Default: let the browser decide
-      ];
-
-      let stream: MediaStream | null = null;
-
-      // Try each constraint until we get a stream
-      for (const constraint of videoConstraints) {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              facingMode: 'environment',
-              ...constraint
-            }
-          });
-          break; // If successful, exit the loop
-        } catch (err) {
-          console.log(`Failed to get stream with constraint:`, constraint, err);
-          // Continue to the next constraint
-        }
-      }
-
-      if (!stream) {
-        throw new Error('Unable to access camera with any of the provided constraints');
-      }
-
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      })
       if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.onloadedmetadata = () => {
-          if (canvasRef.current && videoRef.current) {
-            canvasRef.current.width = videoRef.current.videoWidth;
-            canvasRef.current.height = videoRef.current.videoHeight;
-          }
-        };
+        videoRef.current.srcObject = stream
       }
-
-      // Log the actual video dimensions
-      const videoTrack = stream.getVideoTracks()[0];
-      const settings = videoTrack.getSettings();
-      console.log(`Actual video dimensions: ${settings.width}x${settings.height}`);
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setLocation({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude
-          });
+          })
           toast({
             title: "Location accessed",
             description: "Your location has been successfully captured.",
             variant: "default",
-          });
+          })
         },
         (error) => {
-          console.error("Geolocation error:", error);
+          console.error("Geolocation error:", error)
           toast({
             title: "Location Error",
             description: "Unable to access your location. Some features may be limited.",
             variant: "destructive",
-          });
+          })
         }
-      );
+      )
     } catch (error) {
       const errorMessage = error instanceof Error 
         ? error.message 
-        : 'Unknown error occurred while accessing camera';
+        : 'Unknown error occurred while accessing camera'
       
-      console.error("Camera initialization error:", errorMessage);
       toast({
         title: "Camera Error",
         description: `Unable to access camera: ${errorMessage}`,
         variant: "destructive",
-      });
+      })
     }
-  }, [toast]);
+  }, [toast])
 
   const stopCamera = useCallback(() => {
     if (videoRef.current && videoRef.current.srcObject) {
@@ -246,15 +204,15 @@ export default function TenantPlatform() {
         canvas.toBlob(
           (blob) => {
             if (blob) {
-              const file = new File([blob], `photo_${Date.now()}.png`, {
-                type: 'image/png'
+              const file = new File([blob], `photo_${Date.now()}.jpg`, {
+                type: 'image/jpeg'
               });
               setSelectedFile(file);
               stopCamera();
               setCurrentStep(currentStep + 1);
             }
           },
-          'image/png',
+          'image/jpeg',
           1.0 // Maximum quality
         );
       }
