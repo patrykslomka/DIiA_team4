@@ -45,9 +45,9 @@ const tenantAccounts: TenantAccount[] = [
   {
     email: "lilybarbiers@gmail.com",
     password: "passlily",
-    name: "Timo 1",
+    name: "Lily Barbiers",
     address: "Effestraat 1, Eindhoven",
-    referenceImages: ["/images/window_timo.jpeg", "/images/Painting_timo", "/images/window2_timo.jpeg", "/images/mirror_timo", "/images/door_timo"],
+    referenceImages: ["/images/window_timo.png", "/images/Painting_timo.png", "/images/window2_timo.png", "/images/mirror_timo.png", "/images/door_timo.png"],
   },
   {
     email: "t2@kw.com",
