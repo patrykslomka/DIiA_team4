@@ -43,11 +43,11 @@ type TenantAccount = {
 
 const tenantAccounts: TenantAccount[] = [
   {
-    email: "t1@kw.com",
-    password: "pass1",
+    email: "lilybarbiers@gmail.com",
+    password: "passlily",
     name: "Timo 1",
     address: "Effestraat 1, Eindhoven",
-    referenceImages: ["/images/timo.jpg", "/images/t1-ref2.png"],
+    referenceImages: ["/images/window_timo.jpeg", "/images/Painting_timo", "/images/window2_timo.jpeg", "/images/mirror_timo", "/images/door_timo"],
   },
   {
     email: "t2@kw.com",
