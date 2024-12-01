@@ -50,18 +50,18 @@ const tenantAccounts: TenantAccount[] = [
     referenceImages: ["/images/Window_timo.png", "/images/Painting_timo.png", "/images/Window2_timo.png", "/images/mirror_timo.png", "/images/door_timo.png"],
   },
   {
-    email: "t2@kw.com",
-    password: "pass2",
-    name: "Timo 2",
+    email: "vanroosmalen@gmail.com",
+    password: "top_opa_en_oma",
+    name: "Willy en Nellie",
     address: "Bernstraat 77, Oisterwijk",
-    referenceImages: ["/images/t2-ref1.png", "/images/t2-ref2.png"],
+    referenceImages: ["/images/painting2_timo.png", "/images/radiator_timo.png", "/images/window3_timo.png", "/images/tv_timo_timo.png", "/images/seat_timo.png"],
   },
   {
-    email: "t3@kw.com",
-    password: "pass3",
-    name: "Timo 3",
+    email: "timmermans@gmail.com",
+    password: "Jiti",
+    name: "Johan en Ilona",
     address: "Sportlaan 3, Tilburg",
-    referenceImages: ["/images/t3-ref1.png", "/images/t3-ref2.png"],
+    referenceImages: ["/images/painting2_timo.png", "/images/radiator_timo.png", "/images/window3_timo.png", "/images/tv_timo_timo.png", "/images/seat_timo.png"],
   },
   {
     email: "t4@kw.com",
@@ -941,7 +941,7 @@ const loginStep = (
   <Card className="w-full max-w-md mx-auto">
     <CardHeader>
       <CardTitle>Login</CardTitle>
-      <CardDescription>Enter your credentials to access the platform</CardDescription>
+      <CardDescription>Voer uw gegevens in om toegang te verkrijgen tot het platform</CardDescription>
     </CardHeader>
     <CardContent>
       <form onSubmit={handleLogin} className="space-y-4">
@@ -957,7 +957,7 @@ const loginStep = (
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">Wachtwoord</Label>
           <Input
             id="password"
             type="password"
