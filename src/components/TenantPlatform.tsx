@@ -54,7 +54,7 @@ const tenantAccounts: TenantAccount[] = [
     password: "topopaenoma",
     name: "Willy en Nellie",
     address: "Bernstraat 77, Oisterwijk",
-    referenceImages: ["/images/radiator_timo.png", "/images/window3_timo.png", "/images/tv_timo_timo.png", "/images/seat_timo.png", "/images/painting2_timo.png"],
+    referenceImages: ["/images/radiator_timo.png", "/images/window3_timo.png", "/images/tv_timo.png", "/images/seat_timo.png", "/images/painting2_timo.png"],
   },
   {
     email: "timmermans@gmail.com",
