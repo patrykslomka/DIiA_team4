@@ -61,7 +61,7 @@ const tenantAccounts: TenantAccount[] = [
     password: "Jiti",
     name: "Johan en Ilona",
     address: "Sportlaan 3, Tilburg",
-    referenceImages: ["/images/painting2_timo.png", "/images/radiator_timo.png", "/images/window3_timo.png", "/images/tv_timo_timo.png", "/images/seat_timo.png"],
+    referenceImages: ["/images/door_1_timo.png", "/images/door_2_timo.png", "/images/radiator_2_timo.png", "/images/radiator_timo.png", "/images/door_3_timo.png"],
   },
   {
     email: "t4@kw.com",
