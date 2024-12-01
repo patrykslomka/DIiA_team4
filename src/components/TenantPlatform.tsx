@@ -75,7 +75,7 @@ const tenantAccounts: TenantAccount[] = [
     password: "pass5",
     name: "Vietlinh 2",
     address: "Duurstraat 10, Eindhoven",
-    referenceImages: ["/images/vietlinh1_2.png", "/images/vietlinh2_2.png", "/images/vietlinh3_2.png", "/images/vietlinh4_2.png", "/images/vietlinh5_2.png"]
+    referenceImages: ["/images/Vietlinh/vietlinh1_2.png", "/images/Vietlinh/vietlinh2_2.png", "/images/Vietlinh/vietlinh3_2.png", "/images/Vietlinh/vietlinh4_2.png", "/images/Vietlinh/vietlinh5_2.png"]
   },
   {
     email: "t6@kw.com",
