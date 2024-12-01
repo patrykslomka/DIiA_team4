@@ -51,10 +51,10 @@ const tenantAccounts: TenantAccount[] = [
   },
   {
     email: "vanroosmalen@gmail.com",
-    password: "top_opa_en_oma",
+    password: "topopaenoma",
     name: "Willy en Nellie",
     address: "Bernstraat 77, Oisterwijk",
-    referenceImages: ["/images/painting2_timo.png", "/images/radiator_timo.png", "/images/window3_timo.png", "/images/tv_timo_timo.png", "/images/seat_timo.png"],
+    referenceImages: ["/images/radiator_timo.png", "/images/window3_timo.png", "/images/tv_timo_timo.png", "/images/seat_timo.png", "/images/painting2_timo.png"],
   },
   {
     email: "timmermans@gmail.com",
@@ -950,7 +950,7 @@ const loginStep = (
           <Input
             id="email"
             type="email"
-            placeholder="Enter your email"
+            placeholder="Vul hier je email-adres in"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -961,7 +961,7 @@ const loginStep = (
           <Input
             id="password"
             type="password"
-            placeholder="Enter your password"
+            placeholder="Vul hier je wachtwoord in"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
