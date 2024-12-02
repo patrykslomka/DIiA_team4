@@ -9,18 +9,6 @@ export async function GET(
     const report = await prisma.report.findUnique({
       where: {
         id: params.id
-      },
-      select: {
-        id: true,
-        filename: true,
-        createdAt: true,
-        submission: {
-          select: {
-            streetName: true,
-            apartmentNumber: true,
-            city: true,
-          }
-        }
       }
     })
 
@@ -28,14 +16,17 @@ export async function GET(
       return new Response("Report not found", { status: 404 })
     }
 
-    return new Response(JSON.stringify(report), {
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    // Set the appropriate headers for file download
+    const headers = new Headers()
+    headers.set('Content-Disposition', `attachment; filename="${report.filename}"`)
+    headers.set('Content-Type', 'application/pdf')
+
+    // Return the report content as a downloadable file
+    return new Response(report.content, {
+      headers: headers,
     })
   } catch (error) {
-    console.error('Error fetching report:', error)
+    console.error('Error downloading report:', error)
     return new Response("Error processing request", { status: 500 })
   }
 }
-

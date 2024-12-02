@@ -2,97 +2,83 @@
 
 import { PrismaClient } from '@prisma/client'
 import PDFDocument from 'pdfkit'
+import { join } from 'path'
+import { writeFile } from 'fs/promises'
 import { randomUUID } from 'crypto'
 
-// Create a new PrismaClient instance
 const prisma = new PrismaClient()
 
-export async function generateNEN2767Report(submissionId: string): Promise<string> {
-  console.log(`Generating report for submission ID: ${submissionId}`)
-  
+export async function generateNEN2767Report(submissionId: string) {
   try {
-    // Ensure database connection
-    await prisma.$connect()
-    
+    // Fetch the submission with all details
     const submission = await prisma.submission.findUnique({
       where: { id: submissionId },
     })
 
     if (!submission) {
-      console.error(`Submission not found for ID: ${submissionId}`)
       throw new Error('Submission not found')
     }
 
-    console.log(`Found submission: ${JSON.stringify(submission)}`)
-
-    // Create a new PDF document
+    // Create a new PDF document with explicit font configuration
     const doc = new PDFDocument({
-      size: 'A4',
-      layout: 'portrait'
+      font: join(process.cwd(), 'fonts', 'Helvetica.ttf'),
+      size: 'A4'
     })
 
     const chunks: Buffer[] = []
+
+    // Collect PDF chunks
     doc.on('data', (chunk) => chunks.push(chunk))
     
-    return new Promise<string>((resolve, reject) => {
+    // Return promise that resolves with PDF buffer
+    return new Promise<Buffer>((resolve, reject) => {
       doc.on('end', async () => {
         const pdfBuffer = Buffer.concat(chunks)
-        const fileName = `NEN2767-Report-${randomUUID()}.pdf`
         
-        try {
-          console.log(`Saving report to database: ${fileName}`)
-          // Save the report to the database
-          const report = await prisma.report.create({
-            data: {
-              filename: fileName,
-              content: pdfBuffer,
-              submissionId: submissionId,
-            },
-          })
+        // Save the PDF to a file
+        const fileName = `NEN2767-Report-${randomUUID()}.pdf`
+        const filePath = join(process.cwd(), 'public', 'reports', fileName)
+        await writeFile(filePath, pdfBuffer)
 
-          console.log(`Report saved successfully. Report ID: ${report.id}`)
-          resolve(report.id)
-        } catch (writeError) {
-          console.error('Error saving PDF to database:', writeError)
-          reject(writeError)
-        }
+        resolve(pdfBuffer)
       })
 
-      doc.on('error', (error) => {
-        console.error('Error generating PDF:', error)
-        reject(error)
-      })
+      doc.on('error', reject)
 
-      // PDF Content Generation
-      doc.fontSize(20).text('NEN2767 Inspection Report', { align: 'center' })
-      doc.moveDown(2)
+      // Register font family
+      doc.registerFont('Helvetica', join(process.cwd(), 'fonts', 'Helvetica.ttf'))
+      doc.registerFont('Helvetica-Bold', join(process.cwd(), 'fonts', 'Helvetica-Bold.ttf'))
 
+      // Add content to PDF using registered fonts
+      doc.font('Helvetica-Bold').fontSize(20).text('NEN2767 Inspection Report', { align: 'center' })
+      doc.moveDown()
+      
       // Property Information
-      doc.fontSize(14).text('Property Information')
-      doc.fontSize(12)
+      doc.font('Helvetica-Bold').fontSize(14).text('Property Information')
+      doc.font('Helvetica').fontSize(12)
       doc.text(`Address: ${submission.streetName} ${submission.apartmentNumber}`)
       doc.text(`City: ${submission.city}`)
       doc.text(`Inspection Date: ${submission.date.toLocaleDateString()}`)
       doc.moveDown()
 
       // Condition Assessment
-      doc.fontSize(14).text('Condition Assessment')
-      doc.fontSize(12)
+      doc.font('Helvetica-Bold').fontSize(14).text('Condition Assessment')
+      doc.font('Helvetica').fontSize(12)
       doc.text(`Structural Defects: ${submission.structuralDefects}/6`)
       doc.text(`Decay Magnitude: ${submission.decayMagnitude}/6`)
       doc.text(`Defect Intensity: ${submission.defectIntensity}/6`)
       doc.moveDown()
 
       // Description
-      doc.fontSize(14).text('Description')
-      doc.fontSize(12)
+      doc.font('Helvetica-Bold').fontSize(14).text('Description')
+      doc.font('Helvetica').fontSize(12)
       doc.text(submission.description || 'No description provided')
       doc.moveDown()
 
       // Location Data
       if (submission.latitude && submission.longitude) {
-        doc.fontSize(14).text('Location Data')
-        doc.fontSize(12)
+        doc.font('Helvetica-Bold').fontSize(14).text('Location Data')
+        doc.font('Helvetica').fontSize(12)
         doc.text(`Latitude: ${submission.latitude}`)
         doc.text(`Longitude: ${submission.longitude}`)
       }
@@ -104,8 +90,6 @@ export async function generateNEN2767Report(submissionId: string): Promise<strin
   } catch (error) {
     console.error('Error generating report:', error)
     throw error
-  } finally {
-    await prisma.$disconnect()
   }
 }
 

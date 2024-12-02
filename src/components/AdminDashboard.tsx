@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -63,6 +63,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const { toast } = useToast()
   const router = useRouter()
+  const [pendingSubmissions, setPendingSubmissions] = useState<Set<string>>(new Set())
 
   const fetchSubmissions = async () => {
     try {
@@ -89,30 +90,31 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   }, [])
 
   const handleGenerateReport = async (submissionId: string) => {
+    if (pendingSubmissions.has(submissionId)) return
+
+    setPendingSubmissions(prev => new Set(prev).add(submissionId))
     try {
-      const reportId = await generateNEN2767Report(submissionId)
-      
+      await generateNEN2767Report(submissionId)
+    
       toast({
         title: "Report Generated",
         description: "The NEN2767 report has been generated successfully.",
       })
-  
-      // Create a link and trigger download
-      const link = document.createElement('a')
-      link.href = `/api/reports/${reportId}`
-      link.download = `NEN2767-Report-${submissionId}.pdf`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-  
+
       // Trigger a refresh to ensure the new report is available
       router.refresh()
     } catch (error) {
       console.error('Error generating report:', error)
       toast({
         title: "Error",
-        description: "Failed to generate the report. Please check the console for more details.",
+        description: "Failed to generate the report. Please try again.",
         variant: "destructive",
+      })
+    } finally {
+      setPendingSubmissions(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(submissionId)
+        return newSet
       })
     }
   }
@@ -337,7 +339,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                               <h3 className="font-semibold mb-2">Photo</h3>
                               <div className="aspect-video relative rounded-lg overflow-hidden border">
                                 {submission.photoUrl ? (
-<Image
+                                  <Image
                                     src={submission.photoUrl}
                                     alt="Submitted defect"
                                     fill
@@ -361,9 +363,10 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         size="sm"
                         className="flex items-center gap-2"
                         onClick={() => handleGenerateReport(submission.id)}
+                        disabled={pendingSubmissions.has(submission.id)}
                       >
                         <FileText className="h-4 w-4" />
-                        Generate Report
+                        {pendingSubmissions.has(submission.id) ? 'Generating...' : 'Generate Report'}
                       </Button>
                     </div>
                   </TableCell>
