@@ -97,23 +97,33 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
     setPendingSubmissions(prev => new Set(prev).add(submissionId))
     try {
-      const reportId = await generateNEN2767Report(submissionId)
+      const result = await generateNEN2767Report(submissionId)
     
-      toast({
-        title: "Report Generated",
-        description: "The NEN2767 report has been generated successfully.",
-      })
+      if (result && result.pdfFileName && result.csvFileName) {
+        toast({
+          title: "Reports Generated",
+          description: "The NEN2767 PDF and CSV reports have been generated successfully.",
+        })
 
-      // Open the report in a new tab
-      window.open(`/reports/${reportId}`, '_blank')
+        // Open the PDF report in a new tab
+        window.open(`/reports/${result.pdfFileName}`, '_blank')
 
-      // Trigger a refresh to ensure the new report is available
-      router.refresh()
+        // Provide a download link for the CSV file
+        const csvLink = document.createElement('a')
+        csvLink.href = `/reports/${result.csvFileName}`
+        csvLink.download = result.csvFileName
+        csvLink.click()
+
+        // Trigger a refresh to ensure the new reports are available
+        router.refresh()
+      } else {
+        throw new Error('Failed to generate reports: Invalid response format')
+      }
     } catch (error) {
-      console.error('Error generating report:', error)
+      console.error('Error generating reports:', error)
       toast({
         title: "Error",
-        description: "Failed to generate the report. Please try again.",
+        description: "Failed to generate the reports. Please try again.",
         variant: "destructive",
       })
     } finally {

@@ -46,7 +46,7 @@ const tenantAccounts: TenantAccount[] = [
     email: "tenant@kw.com",
     password: "pass",
     name: "Tim Bakker",
-    address: "Sint Janssingel 92, den Bosch",
+    address: "Sint Janssingel, den Bosch",
     referenceImages: ["/images/demo.png"],
   }
 ];
@@ -252,7 +252,7 @@ export default function TenantPlatform() {
       if (userType === 'tenant' && currentTenant) {
         const [street, city] = currentTenant.address.split(',').map(s => s.trim())
         formData.append('streetName', street)
-        formData.append('apartmentNumber', '1')
+        formData.append('apartmentNumber', '92')
         formData.append('city', city)
         formData.append('submittedBy', currentTenant.email)
       } else if (userType === 'employee' && _selectedAddress) {
