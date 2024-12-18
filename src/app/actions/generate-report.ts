@@ -1,6 +1,6 @@
 'use server'
 
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Submission } from '@prisma/client'
 import PDFDocument from 'pdfkit'
 import { join } from 'path'
 import { writeFile, mkdir } from 'fs/promises'
@@ -45,7 +45,7 @@ export async function generateNEN2767Report(submissionId: string) {
   }
 }
 
-async function generatePDF(submission: any, filePath: string) {
+async function generatePDF(submission: Submission, filePath: string) {
   return new Promise<void>((resolve, reject) => {
     const doc = new PDFDocument({
       size: 'A4',
@@ -53,7 +53,7 @@ async function generatePDF(submission: any, filePath: string) {
     })
 
     const writeStream = fs.createWriteStream(filePath)
-    const stream = doc.pipe(writeStream)
+    doc.pipe(writeStream)
 
     doc.on('end', () => {
       writeStream.end()
@@ -138,7 +138,7 @@ async function generatePDF(submission: any, filePath: string) {
   })
 }
 
-async function generateCSV(submission: any, filePath: string) {
+async function generateCSV(submission: Submission, filePath: string) {
   const csvStringifier = createObjectCsvStringifier({
     header: [
       { id: 'address', title: 'Address' },
@@ -172,4 +172,3 @@ async function generateCSV(submission: any, filePath: string) {
   const csvContent = csvStringifier.getHeaderString() + csvData
   await writeFile(filePath, csvContent)
 }
-
