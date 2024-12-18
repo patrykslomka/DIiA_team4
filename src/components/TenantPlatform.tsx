@@ -45,37 +45,37 @@ const tenantAccounts: TenantAccount[] = [
   {
     email: "t1@kw.com",
     password: "pass1",
-    name: "Timo 1",
+    name: "Username",
     address: "Effestraat 1, Eindhoven",
-    referenceImages: ["/images/timo.jpg", "/images/t1-ref2.png"],
+    referenceImages: ["/images/Window_timo.png", "/images/Painting_timo.png", "/images/Window2_timo.png", "/images/mirror_timo.png", "/images/door_timo.png"],
   },
   {
-    email: "t2@kw.com",
-    password: "pass2",
-    name: "Timo 2",
+    email: "vanroosmalen@gmail.com",
+    password: "topopaenoma",
+    name: "Willy en Nellie",
     address: "Bernstraat 77, Oisterwijk",
-    referenceImages: ["/images/t2-ref1.png", "/images/t2-ref2.png"],
+    referenceImages: ["/images/door_1_timo.png", "/images/door_2_timo.png", "/images/radiator_2_timo.png", "/images/radiator_timo.png", "/images/door_3_timo.png"],
   },
   {
-    email: "t3@kw.com",
-    password: "pass3",
-    name: "Timo 3",
+    email: "timmermans@gmail.com",
+    password: "Jiti",
+    name: "Johan en Ilona",
     address: "Sportlaan 3, Tilburg",
-    referenceImages: ["/images/t3-ref1.png", "/images/t3-ref2.png"],
+    referenceImages: ["/images/door_1_timo.png", "/images/door_2_timo.png", "/images/radiator_2_timo.png", "/images/radiator_timo.png", "/images/door_3_timo.png"],
   },
   {
     email: "t4@kw.com",
     password: "pass4",
     name: "Vietlinh 1",
     address: "Academialaan 5, Tilburg",
-    referenceImages: ["/images/t3-ref1.png", "/images/t3-ref2.png"]
+    referenceImages: ["/images/Vietlinh/vietlinh1.png", "/images/Vietlinh/vietlinh2.png", "/images/Vietlinh/vietlinh3.png", "/images/Vietlinh/vietlinh4.png", "/images/Vietlinh/vietlinh5.png"]
   },
   {
     email: "t5@kw.com",
     password: "pass5",
     name: "Vietlinh 2",
     address: "Duurstraat 10, Eindhoven",
-    referenceImages: ["/images/t3-ref1.png", "/images/t3-ref2.png"]
+    referenceImages: ["/images/Vietlinh/vietlinh1_2.png", "/images/Vietlinh/vietlinh2_2.png", "/images/Vietlinh/vietlinh3_2.png", "/images/Vietlinh/vietlinh4_2.png", "/images/Vietlinh/vietlinh5_2.png"]
   },
   {
     email: "t6@kw.com",
@@ -133,10 +133,11 @@ export default function TenantPlatform() {
   const [currentReferenceImageIndex, setCurrentReferenceImageIndex] = useState(0)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
   const [showPhotoComparison, setShowPhotoComparison] = useState(false)
   const [comparisonScore, setComparisonScore] = useState<number | null>(null)
-
+  
   const startCamera = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -153,16 +154,16 @@ export default function TenantPlatform() {
             longitude: position.coords.longitude
           })
           toast({
-            title: "Location accessed",
-            description: "Your location has been successfully captured.",
+            title: "Locatie beoordeeld",
+            description: "Je locatie is succesvol ontvangen",
             variant: "default",
           })
         },
         (error) => {
           console.error("Geolocation error:", error)
           toast({
-            title: "Location Error",
-            description: "Unable to access your location. Some features may be limited.",
+            title: "Locatie fout",
+            description: "Niet mogelijk om de locatie te achterhalen, sommige functies zullen daardoor beperkt zijn.",
             variant: "destructive",
           })
         }
@@ -170,11 +171,11 @@ export default function TenantPlatform() {
     } catch (error) {
       const errorMessage = error instanceof Error 
         ? error.message 
-        : 'Unknown error occurred while accessing camera'
+        : 'Onbekende fout bij het openen van de camera'
       
       toast({
         title: "Camera Error",
-        description: `Unable to access camera: ${errorMessage}`,
+        description: `Niet mogelijk om de camera te openen: ${errorMessage}`,
         variant: "destructive",
       })
     }
@@ -182,45 +183,57 @@ export default function TenantPlatform() {
 
   const stopCamera = useCallback(() => {
     if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks()
-      tracks.forEach(track => track.stop())
-      videoRef.current.srcObject = null
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach(track => track.stop());
+      videoRef.current.srcObject = null;
     }
-  }, [])
+  }, []);
 
-  const [capturedImageBlob, setCapturedImageBlob] = useState<Blob | null>(null)
-
-  const capturePhoto = () => {
+  const capturePhoto = useCallback(() => {
     if (videoRef.current && canvasRef.current) {
-      const context = canvasRef.current.getContext('2d')
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      const context = canvas.getContext('2d');
       if (context) {
-        context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height)
-        canvasRef.current.toBlob((blob) => {
-          if (blob) {
-            setCapturedImageBlob(blob)
-            setSelectedFile(new File([blob], "captured-photo.jpg", { type: "image/jpeg" }))
-            stopCamera()
-            setCurrentStep(currentStep + 1)
-          }
-        }, 'image/jpeg')
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const file = new File([blob], `photo_${Date.now()}.jpg`, {
+                type: 'image/jpeg'
+              });
+              setSelectedFile(file);
+              stopCamera();
+              setCurrentStep(currentStep + 1);
+            }
+          },
+          'image/jpeg',
+          1.0 // Maximum quality
+        );
       }
     }
-  }
+  }, [currentStep, stopCamera, setSelectedFile, setCurrentStep]);
+
 
   const handleLogin = (event: React.FormEvent) => {
     event.preventDefault()
     const tenant = tenantAccounts.find(account => account.email === email && account.password === password)
     if (tenant) {
       toast({
-        title: "Login successful!",
-        description: `Welcome to the KleurijkWonen tenant platform, ${tenant.name}!`,
+        title: "Login succesvol!",
+        description: `Welkom bij het huurders platform van KleurrijkWonen, ${tenant.name}!`,
       })
       setUserType('tenant')
       setCurrentTenant(tenant)
       setCurrentStep(1)
     } else if (email === "employee@kw.com" && password === "employee") {
       toast({
-        title: "Login successful!",
+        title: "Login succesvol!",
         description: "Welcome to the KleurijkWonen employee platform!",
       })
       setUserType('employee')
@@ -234,8 +247,8 @@ export default function TenantPlatform() {
       setCurrentStep(20)
     } else {
       toast({
-        title: "Login failed",
-        description: "Invalid email or password. Please try again.",
+        title: "Login is niet gelukt",
+        description: "Ongeldig email-adres of wachtwoord, probeer opnieuw",
         variant: "destructive",
       })
     }
@@ -252,15 +265,15 @@ export default function TenantPlatform() {
     setCurrentReferenceImageIndex(0)
     setUploadedPhotosCount(0)
     toast({
-      title: "Logged out",
-      description: "You have been successfully logged out.",
+      title: "Uitgelogd",
+      description: "Je bent succesvol uitgelogd",
     })
   }
 
   const getRewardLevel = (photoCount: number) => {
-    if (photoCount >= 10) return "Gold"
-    if (photoCount >= 5) return "Silver"
-    if (photoCount >= 1) return "Bronze"
+    if (photoCount >= 10) return "Goud"
+    if (photoCount >= 5) return "Zilver"
+    if (photoCount >= 1) return "Brons"
     return "None"
   }
 
@@ -281,13 +294,13 @@ export default function TenantPlatform() {
     setComparisonMessage(message)
     if (message.toLowerCase().includes('good') || message.toLowerCase().includes('acceptable')) {
       toast({
-        title: "Photo Accepted",
+        title: "Foto geaccepteerd",
         description: message,
         variant: "default",
       })
     } else {
       toast({
-        title: "Photo Needs Adjustment",
+        title: "Foto moet worden aangepast",
         description: message,
         variant: "destructive",
       })
@@ -299,7 +312,7 @@ export default function TenantPlatform() {
     if (!selectedFile) {
       toast({
         title: "Error",
-        description: "Please capture a photo before submitting.",
+        description: "Maak eerst een foto voordat je hem verder gaat.",
         variant: "destructive",
       })
       return
@@ -399,7 +412,7 @@ export default function TenantPlatform() {
       console.error('Submission error:', error)
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to submit the assessment. Please try again.",
+        description: error instanceof Error ? error.message : "Het is mislukt om de beoordeling te versturen. Probeer het opnieuw.",
         variant: "destructive",
       })
     }
@@ -448,38 +461,38 @@ export default function TenantPlatform() {
 
   const tenantSteps = [
     // Step 1: Instructions
-    <Card key="instructions" className="w-full max-w-md mx-auto">
+    <Card key="instructies" className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>Instructions & Information</CardTitle>
-        <CardDescription>Help us improve your living space</CardDescription>
+        <CardTitle>Instructies & Informatie</CardTitle>
+        <CardDescription>Help ons je leefplaats te verbeteren</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="bg-muted p-4 rounded-lg">
           <h3 className="font-semibold mb-2 flex items-center">
             <Info className="mr-2 h-4 w-4" />
-            Why We Need Your Help
+            Waarom we je hulp nodig hebben:
           </h3>
           <p className="text-sm text-muted-foreground">
-            By submitting photos and assessments of your living space, you help us:
+            Door het versturen van foto's en beoordelingen van je leefruimte help je ons met:
           </p>
           <ul className="list-disc list-inside text-sm text-muted-foreground mt-2">
-            <li>Identify areas that need maintenance</li>
-            <li>Prioritize repairs and improvements</li>
-            <li>Ensure the safety and comfort of all tenants</li>
+            <li>Ruimtes te identificeren die onderhoud nodig hebben</li>
+            <li>Prioriteiten stellen voor onderhoud en verbeteringen</li>
+            <li>Het waarborgen van de veiligheid en comfort van onze huurders</li>
           </ul>
         </div>
         <div className="bg-muted p-4 rounded-lg">
           <h3 className="font-semibold mb-2 flex items-center">
             <Gift className="mr-2 h-4 w-4" />
-            What You Can Gain
+            Wat jij krijgt:
           </h3>
           <p className="text-sm text-muted-foreground">
-            As a thank you for your participation, you can earn rewards based on the number of photos you submit:
+            Om je te bedanken voor je deelname wordt je beloond. We bepalen je beloning aan de hand van de hoeveelheid foto's die je hebt verstuurd:
           </p>
           <ul className="list-disc list-inside text-sm text-muted-foreground mt-2">
-            <li>Bronze level: 1-4 photos</li>
-            <li>Silver level: 5-9 photos</li>
-            <li>Gold level: 10+ photos</li>
+            <li>Brons: 1-4 foto's</li>
+            <li>Zilver: 5-9 foto's</li>
+            <li>Goud: 10+ foto's</li>
           </ul>
         </div>
       </CardContent>
@@ -492,8 +505,8 @@ export default function TenantPlatform() {
     // Step 2: Example Photo
     <Card key="example" className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>Example Photo</CardTitle>
-        <CardDescription>This is an example of what we're looking for</CardDescription>
+        <CardTitle>Voorbeeld foto</CardTitle>
+        <CardDescription>Zou jij deze foto voor ons kunnen namaken?</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {currentTenant && (
@@ -511,41 +524,48 @@ export default function TenantPlatform() {
           </div>
         )}
         <Button onClick={() => setCurrentStep(3)} className="w-full">
-          <Camera className="mr-2 h-4 w-4" /> Take Photo
+          <Camera className="mr-2 h-4 w-4" /> Neem de foto
         </Button>
       </CardContent>
     </Card>,
     // Step 3: Capture Photo
-    <Card key="capture" className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Capture Photo</CardTitle>
-        <CardDescription>Please take a photo of the issue</CardDescription>
+    <Card key="capture" className="w-full max-w-md mx-auto h-[85vh] flex flex-col overflow-hidden my-4">
+      <CardHeader className="flex-shrink-0 py-3">
+        <CardTitle className="text-lg">Foto maken</CardTitle>
+        <CardDescription className="text-sm">Maak alsjeblieft een foto zoals in het voorbeeld</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="aspect-video bg-muted rounded-lg overflow-hidden">
-          <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+      <CardContent className="flex-grow p-3 relative" ref={containerRef}>
+        <div className="w-full h-full bg-muted rounded-lg overflow-hidden relative">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          />
         </div>
-        <div className="flex justify-between items-center">
-          <Button onClick={capturePhoto}>
-            <Camera className="mr-2 h-4 w-4" /> Capture Photo
+      </CardContent>
+      <CardFooter className="flex-shrink-0 py-3">
+        <div className="w-full space-y-2">
+          <Button onClick={capturePhoto} className="w-full">
+            <Camera className="mr-2 h-4 w-4" /> Foto maken
           </Button>
           {location ? (
-            <div className="flex items-center text-sm text-green-600">
-              <MapPin className="mr-1 h-4 w-4" /> Location captured
+            <div className="flex items-center justify-center text-sm text-green-600">
+              <MapPin className="mr-1 h-4 w-4" /> Locatie gevonden
             </div>
           ) : (
-            <div className="flex items-center text-sm text-yellow-600">
-              <MapPin className="mr-1 h-4 w-4" /> Accessing location...
+            <div className="flex items-center justify-center text-sm text-yellow-600">
+              <MapPin className="mr-1 h-4 w-4" /> Locatie zoeken...
             </div>
           )}
         </div>
-      </CardContent>
+      </CardFooter>
     </Card>,
     // Step 4: Photo Comparison
     <Card key="comparison" className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>Compare Photos</CardTitle>
-        <CardDescription>Please verify that your photo matches the example</CardDescription>
+        <CardTitle>Vergelijk foto's</CardTitle>
+        <CardDescription>Controleer of je foto overeenkomt met de foto van het voorbeeld</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {currentTenant && (
@@ -564,8 +584,8 @@ export default function TenantPlatform() {
     // Step 5: Condition Assessment
     <Card key="assessment" className="w-full max-w-md mx-auto">
       <CardHeader>
-        <CardTitle>Assess the Condition</CardTitle>
-        <CardDescription>Please rate the following aspect on a scale of 1-6</CardDescription>
+        <CardTitle>Beoordeel de staat van het element</CardTitle>
+        <CardDescription>Beordeel de staat van het element op een schaal van 1-6</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {selectedFile && (
@@ -581,7 +601,7 @@ export default function TenantPlatform() {
         )}
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Are there defects to the structural element?</Label>
+            <Label>Zijn er gebreken aan het element?</Label>
             <Slider
               value={[structuralDefects]}
               onValueChange={(value) => setStructuralDefects(value[0])}
@@ -592,7 +612,7 @@ export default function TenantPlatform() {
             <div className="text-sm text-muted-foreground text-center">{structuralDefects}/6</div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Additional Comments (Optional)</Label>
+            <Label htmlFor="description">Aanvullende Opmerkingen? (Optioneel)</Label>
             <Textarea
               id="description"
               placeholder="Any additional observations..."
@@ -608,7 +628,7 @@ export default function TenantPlatform() {
           </div>
         </div>
         <Button onClick={handleSubmit} className="w-full mt-4">
-          Submit <ChevronRight className="ml-2 h-4 w-4" />
+          Verstuur <ChevronRight className="ml-2 h-4 w-4" />
         </Button>
       </CardContent>
     </Card>,
@@ -624,15 +644,15 @@ export default function TenantPlatform() {
             className="rounded-lg"
           />
         </div>
-        <CardTitle>Thank You!</CardTitle>
-        <CardDescription>Your submission has been received</CardDescription>
+        <CardTitle>Bedankt!</CardTitle>
+        <CardDescription>Je inzending is ontvangen.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {uploadProgress < 100 ? (
           <div className="space-y-2">
             <Progress value={uploadProgress} />
             <p className="text-sm text-center text-muted-foreground">
-              Processing submission... {uploadProgress}%
+              Verwerken van je inzending... {uploadProgress}%
             </p>
           </div>
         ) : (
@@ -649,10 +669,10 @@ export default function TenantPlatform() {
               </div>
             )}
             <div className="bg-muted p-4 rounded-lg text-center">
-              <h3 className="font-semibold mb-2">Your Reward Level</h3>
+              <h3 className="font-semibold mb-2">Je belonings niveau!</h3>
               <p className="text-2xl font-bold">{getRewardLevel(uploadedPhotosCount)}</p>
               <p className="text-sm text-muted-foreground mt-2">
-                Total photos submitted: {uploadedPhotosCount}
+                Totaal aantal foto's verstuurd: {uploadedPhotosCount}
               </p>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -664,7 +684,7 @@ export default function TenantPlatform() {
                 className="w-full" 
                 variant="outline"
               >
-                Submit Another Photo
+                Verstuur nog een andere foto
               </Button>
               <Button onClick={handleLogout} className="w-full">
                 <LogOut className="mr-2 h-4 w-4" /> Sign Out
@@ -921,7 +941,7 @@ const loginStep = (
   <Card className="w-full max-w-md mx-auto">
     <CardHeader>
       <CardTitle>Login</CardTitle>
-      <CardDescription>Enter your credentials to access the platform</CardDescription>
+      <CardDescription>Voer uw gegevens in om toegang te verkrijgen tot het platform</CardDescription>
     </CardHeader>
     <CardContent>
       <form onSubmit={handleLogin} className="space-y-4">
@@ -930,18 +950,18 @@ const loginStep = (
           <Input
             id="email"
             type="email"
-            placeholder="Enter your email"
+            placeholder="Vul hier je email-adres in"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">Wachtwoord</Label>
           <Input
             id="password"
             type="password"
-            placeholder="Enter your password"
+            placeholder="Vul hier je wachtwoord in"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required

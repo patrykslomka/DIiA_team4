@@ -70,7 +70,8 @@ export function PhotoComparison({
       }
 
       setComparisonMessage(data.message)
-      onComparisonComplete(data.message)
+      // Remove this line:
+      //onComparisonComplete(data.message)
     } catch (error) {
       console.error('Error comparing images:', error)
       setError(error instanceof Error ? error.message : 'Failed to compare images. Please try again.')
@@ -82,35 +83,35 @@ export function PhotoComparison({
   if (!selectedFile || !capturedImageUrl) {
     return (
       <div className="text-center p-4">
-        <p className="text-muted-foreground">No photo captured. Please go back and take a photo.</p>
+        <p className="text-muted-foreground">Er is nog geen foto gemaakt, ga terug om er eentje te maken</p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+    <div className="space-y-6">
+      <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-semibold mb-2">Reference Image</h3>
-          <div className="relative aspect-video bg-muted">
+          <h3 className="text-lg font-semibold mb-2">Voorbeeld foto</h3>
+          <div className="relative aspect-video w-full max-w-2xl mx-auto bg-muted">
             <Image
               src={referenceImageSrc}
               alt="Reference"
               fill
-              className="object-cover rounded-lg"
+              className="object-contain rounded-lg"
               priority
               unoptimized
             />
           </div>
         </div>
         <div>
-          <h3 className="text-lg font-semibold mb-2">Your Photo</h3>
-          <div className="relative aspect-video bg-muted">
+          <h3 className="text-lg font-semibold mb-2">Uw foto</h3>
+          <div className="relative aspect-video w-full max-w-2xl mx-auto bg-muted">
             <Image
               src={capturedImageUrl}
               alt="Captured"
               fill
-              className="object-cover rounded-lg"
+              className="object-contain rounded-lg"
               priority
               unoptimized
             />
@@ -122,14 +123,21 @@ export function PhotoComparison({
         disabled={isComparing}
         className="w-full"
       >
-        {isComparing ? 'Comparing...' : 'Compare Images'}
+        {isComparing ? 'Vergelijken...' : "Vergelijk foto's"}
       </Button>
       {comparisonMessage && (
-        <Alert variant={comparisonMessage.toLowerCase().includes('dark') ? "destructive" : "default"}>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Photo Analysis Result</AlertTitle>
-          <AlertDescription>{comparisonMessage}</AlertDescription>
-        </Alert>
+        <div className={`mt-4 p-4 rounded-lg ${
+          comparisonMessage.toLowerCase().includes('great picture') 
+            ? 'bg-green-100 text-green-700' 
+            : 'bg-destructive/10 text-destructive'
+        }`}>
+          <div className="font-semibold">
+            {comparisonMessage.toLowerCase().includes('great picture') ? 'Photo Needs No Adjustments!' : 'Photo Needs Adjustment'}
+          </div>
+          <div className="text-sm">
+            {comparisonMessage}
+          </div>
+        </div>
       )}
       {error && (
         <Alert variant="destructive">
@@ -140,13 +148,13 @@ export function PhotoComparison({
       )}
       <div className="flex justify-between mt-4">
         <Button variant="outline" onClick={onRetake}>
-          Retake Photo
+          Foto opnieuw maken
         </Button>
         <Button 
           onClick={onContinue} 
           disabled={!comparisonMessage || !comparisonMessage.includes("Great picture")}
         >
-          Continue
+          Doorgaan
         </Button>
       </div>
     </div>
