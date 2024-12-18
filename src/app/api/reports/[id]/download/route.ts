@@ -1,32 +1,24 @@
-import { NextRequest } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { NextRequest, NextResponse } from 'next/server'
+import { join } from 'path'
+import { readFile } from 'fs/promises'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { filename: string } }
 ) {
   try {
-    const report = await prisma.report.findUnique({
-      where: {
-        id: params.id
-      }
-    })
-
-    if (!report) {
-      return new Response("Report not found", { status: 404 })
-    }
-
-    // Set the appropriate headers for file download
-    const headers = new Headers()
-    headers.set('Content-Disposition', `attachment; filename="${report.filename}"`)
-    headers.set('Content-Type', 'application/pdf')
-
-    // Return the report content as a downloadable file
-    return new Response(report.content, {
-      headers: headers,
+    const filePath = join(process.cwd(), 'public', 'reports', params.filename)
+    const fileBuffer = await readFile(filePath)
+    
+    return new NextResponse(fileBuffer, {
+      headers: {
+        'Content-Disposition': `inline; filename="${params.filename}"`,
+        'Content-Type': 'application/pdf',
+      },
     })
   } catch (error) {
-    console.error('Error downloading report:', error)
-    return new Response("Error processing request", { status: 500 })
+    console.error('Error serving PDF:', error)
+    return new NextResponse('PDF not found', { status: 404 })
   }
 }
+

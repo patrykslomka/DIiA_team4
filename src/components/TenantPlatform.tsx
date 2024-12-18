@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useRef, useEffect, useCallback } from "react"
-import { Camera, LogIn, LogOut, Gift, ChevronRight, ChevronLeft, Info, MapPin } from "lucide-react"
+import { Camera, LogIn, LogOut, Gift, ChevronRight, ChevronLeft, Info, MapPin } from 'lucide-react'
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -43,26 +43,12 @@ type TenantAccount = {
 
 const tenantAccounts: TenantAccount[] = [
   {
-    email: "t1@kw.com",
-    password: "pass1",
+    email: "tenant@kw.com",
+    password: "pass",
     name: "Tim Bakker",
-    address: "Effestraat 1, Eindhoven",
-    referenceImages: ["/images/t1-ref1.png", "/images/t1-ref2.png"],
-  },
-  {
-    email: "t2@kw.com",
-    password: "pass2",
-    name: "Tara Meik",
-    address: "Bernstraat 77, Oisterwijk",
-    referenceImages: ["/images/t2-ref1.png", "/images/t2-ref2.png"],
-  },
-  {
-    email: "t3@kw.com",
-    password: "pass3",
-    name: "Job Klaus",
-    address: "Sportlaan 3, Tilburg",
-    referenceImages: ["/images/t3-ref1.png", "/images/t3-ref2.png"],
-  },
+    address: "Sint Janssingel, den Bosch",
+    referenceImages: ["/images/demo.png"],
+  }
 ];
 
 export default function TenantPlatform() {
@@ -87,6 +73,7 @@ export default function TenantPlatform() {
   const { toast } = useToast()
   const [showPhotoComparison, setShowPhotoComparison] = useState(false)
   const [comparisonScore, setComparisonScore] = useState<number | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const startCamera = useCallback(async () => {
     try {
@@ -250,12 +237,13 @@ export default function TenantPlatform() {
       })
       return
     }
-  
+
+    setIsSubmitting(true) // Set loading state to true
     setUploadProgress(0)
     const progressInterval = setInterval(() => {
       setUploadProgress(prev => Math.min(prev + 10, 90))
     }, 500)
-  
+
     try {
       const formData = new FormData()
       formData.append('photo', selectedFile)
@@ -264,7 +252,7 @@ export default function TenantPlatform() {
       if (userType === 'tenant' && currentTenant) {
         const [street, city] = currentTenant.address.split(',').map(s => s.trim())
         formData.append('streetName', street)
-        formData.append('apartmentNumber', '1')
+        formData.append('apartmentNumber', '92')
         formData.append('city', city)
         formData.append('submittedBy', currentTenant.email)
       } else if (userType === 'employee' && _selectedAddress) {
@@ -321,10 +309,12 @@ export default function TenantPlatform() {
         } else if (userType === 'employee') {
           setCurrentStep(15)
         }
+        setIsSubmitting(false) // Reset loading state
       }, 1000)
     } catch (error) {
       clearInterval(progressInterval)
       setUploadProgress(0)
+      setIsSubmitting(false) // Reset loading state
   
       console.error('Submission error:', error)
       toast({
@@ -348,7 +338,8 @@ export default function TenantPlatform() {
     resetAssessment,
     setSubmissions,
     setUploadedPhotosCount,
-    setCurrentStep
+    setCurrentStep,
+    setIsSubmitting // Add this new dependency
   ])
   
   
@@ -419,18 +410,18 @@ export default function TenantPlatform() {
         </Button>
       </CardFooter>
     </Card>,
-    // Step 2: Example Photo
+    // Step 2: Reference photo
     <Card key="example" className="w-full max-w-md mx-auto">
       <CardHeader>
         <CardTitle>Example Photo</CardTitle>
-        <CardDescription>This is an example of what we're looking for</CardDescription>
+        <CardDescription>This is a reference photo of an object we're looking for</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {currentTenant && (
           <div className="relative rounded-lg overflow-hidden">
             <Image
               src={currentTenant.referenceImages[currentReferenceImageIndex]}
-              alt={`Example photo ${currentReferenceImageIndex + 1}`}
+              alt={`Reference photo ${currentReferenceImageIndex + 1}`}
               width={400}
               height={300}
               className="w-full object-cover"
@@ -536,10 +527,32 @@ export default function TenantPlatform() {
             <div className="text-sm text-muted-foreground text-center">{structuralDefects}/6</div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Additional Comments (Optional)</Label>
+            <Label>What is the magnitude of the decay?</Label>
+            <Slider
+              value={[decayMagnitude]}
+              onValueChange={(value) => setDecayMagnitude(value[0])}
+              max={6}
+              min={1}
+              step={1}
+            />
+            <div className="text-sm text-muted-foreground text-center">{decayMagnitude}/6</div>
+          </div>
+          <div className="space-y-2">
+            <Label>What is the intensity of the defects?</Label>
+            <Slider
+              value={[defectIntensity]}
+              onValueChange={(value) => setDefectIntensity(value[0])}
+              max={6}
+              min={1}
+              step={1}
+            />
+            <div className="text-sm text-muted-foreground text-center">{defectIntensity}/6</div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Additional Information</Label>
             <Textarea
               id="description"
-              placeholder="Any additional observations..."
+              placeholder="Provide detailed observations..."
               value={description}
               onChange={(e) => {
                 const value = e.target.value
@@ -551,8 +564,8 @@ export default function TenantPlatform() {
             />
           </div>
         </div>
-        <Button onClick={handleSubmit} className="w-full mt-4">
-          Submit <ChevronRight className="ml-2 h-4 w-4" />
+        <Button onClick={handleSubmit} className="w-full mt-4" disabled={isSubmitting}>
+          {isSubmitting ? 'Submitting...' : 'Submit'}
         </Button>
       </CardContent>
     </Card>,
@@ -827,8 +840,8 @@ export default function TenantPlatform() {
             />
           </div>
         </div>
-        <Button onClick={handleSubmit} className="w-full mt-4">
-          Submit
+        <Button onClick={handleSubmit} className="w-full mt-4" disabled={isSubmitting}>
+          {isSubmitting ? 'Submitting...' : 'Submit'}
         </Button>
       </CardContent>
     </Card>,
@@ -920,3 +933,4 @@ return (
   </div>
 )
 }
+

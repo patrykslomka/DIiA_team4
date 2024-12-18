@@ -1,8 +1,10 @@
+'use client'
+
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import {
   Table,
   TableBody,
@@ -20,7 +22,7 @@ import {
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { LogOut, AlertCircle, FileSpreadsheet, Users, BarChart3, MapPin, Eye, FileText } from 'lucide-react'
+import { LogOut, AlertCircle, FileSpreadsheet, Users, Eye, FileText, MapPin } from 'lucide-react'
 import { format } from 'date-fns'
 import {
   Dialog,
@@ -64,6 +66,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
   const { toast } = useToast()
   const router = useRouter()
   const [pendingSubmissions, setPendingSubmissions] = useState<Set<string>>(new Set())
+  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null)
 
   const fetchSubmissions = async () => {
     try {
@@ -94,20 +97,33 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
     setPendingSubmissions(prev => new Set(prev).add(submissionId))
     try {
-      await generateNEN2767Report(submissionId)
+      const result = await generateNEN2767Report(submissionId)
     
-      toast({
-        title: "Report Generated",
-        description: "The NEN2767 report has been generated successfully.",
-      })
+      if (result && result.pdfFileName && result.csvFileName) {
+        toast({
+          title: "Reports Generated",
+          description: "The NEN2767 PDF and CSV reports have been generated successfully.",
+        })
 
-      // Trigger a refresh to ensure the new report is available
-      router.refresh()
+        // Open the PDF report in a new tab
+        window.open(`/reports/${result.pdfFileName}`, '_blank')
+
+        // Provide a download link for the CSV file
+        const csvLink = document.createElement('a')
+        csvLink.href = `/reports/${result.csvFileName}`
+        csvLink.download = result.csvFileName
+        csvLink.click()
+
+        // Trigger a refresh to ensure the new reports are available
+        router.refresh()
+      } else {
+        throw new Error('Failed to generate reports: Invalid response format')
+      }
     } catch (error) {
-      console.error('Error generating report:', error)
+      console.error('Error generating reports:', error)
       toast({
         title: "Error",
-        description: "Failed to generate the report. Please try again.",
+        description: "Failed to generate the reports. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -118,7 +134,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       })
     }
   }
-  
+
   const filteredSubmissions = submissions
     .filter(submission => {
       if (filter === 'all') return true
@@ -135,20 +151,12 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       return new Date(a.date).getTime() - new Date(b.date).getTime()
     })
 
-  const getAverageDefectScore = (submissions: Submission[]) => {
-    if (submissions.length === 0) return 0
-    const total = submissions.reduce((acc, sub) => 
-      acc + (sub.structuralDefects + sub.decayMagnitude + sub.defectIntensity) / 3, 0
-    )
-    return Math.round((total / submissions.length) * 10) / 10
-  }
-
   const getTenantReports = () => submissions.filter(s => s.type === 'tenant').length
   const getEmployeeReports = () => submissions.filter(s => s.type === 'employee').length
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="container mx-auto p-6 max-w-[1600px]">
+      <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
           <p className="text-muted-foreground">Manage and view all submissions</p>
@@ -158,7 +166,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Card className="p-4">
           <div className="flex items-center space-x-2">
             <FileSpreadsheet className="h-4 w-4" />
@@ -180,16 +188,9 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
           </div>
           <p className="text-2xl font-bold">{getEmployeeReports()}</p>
         </Card>
-        <Card className="p-4">
-          <div className="flex items-center space-x-2">
-            <BarChart3 className="h-4 w-4" />
-            <span className="text-sm font-medium">Avg. Defect Score</span>
-          </div>
-          <p className="text-2xl font-bold">{getAverageDefectScore(submissions)}</p>
-        </Card>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-wrap gap-4 mb-6">
         <Input
           placeholder="Search address..."
           value={searchTerm}
@@ -218,165 +219,141 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
       </div>
 
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Address</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Defect Score</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
+      <div className="bg-white rounded-md border">
+        <div className="min-w-full">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={7} className="text-center">Loading submissions...</TableCell>
+                <TableHead className="w-[25%]">Address</TableHead>
+                <TableHead className="w-[10%]">Type</TableHead>
+                <TableHead className="w-[15%]">Date</TableHead>
+                <TableHead className="w-[35%]">Description</TableHead>
+                <TableHead className="w-[15%] text-right">Actions</TableHead>
               </TableRow>
-            ) : filteredSubmissions.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center">No submissions found matching your criteria</TableCell>
-              </TableRow>
-            ) : (
-              filteredSubmissions.map((submission) => (
-                <TableRow key={submission.id}>
-                  <TableCell>
-                    {submission.streetName} {submission.apartmentNumber}, {submission.city}
-                  </TableCell>
-                  <TableCell className="capitalize">{submission.type}</TableCell>
-                  <TableCell>{format(new Date(submission.date), 'dd/MM/yyyy HH:mm')}</TableCell>
-                  <TableCell className="max-w-[200px]">
-                    <p className="truncate" title={submission.description}>
-                      {submission.description || 'No description provided'}
-                    </p>
-                  </TableCell>
-                  <TableCell>
-                    {submission.latitude && submission.longitude ? (
-                      <div className="flex items-center gap-1" title={`${submission.latitude}, ${submission.longitude}`}>
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          {submission.latitude.toFixed(4)}, {submission.longitude.toFixed(4)}
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">No location data</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {((submission.structuralDefects + submission.decayMagnitude + submission.defectIntensity) / 3).toFixed(1)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm" className="flex items-center gap-2">
-                            <Eye className="h-4 w-4" />
-                            View Details
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-4xl">
-                          <DialogHeader>
-                            <DialogTitle>Submission Details</DialogTitle>
-                            <DialogDescription>
-                              Submitted on {format(new Date(submission.date), 'dd MMMM yyyy HH:mm')}
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                              <div>
-                                <h3 className="font-semibold mb-1">Location Details</h3>
-                                <p className="text-sm">
-                                  {submission.streetName} {submission.apartmentNumber}
-                                  <br />
-                                  {submission.city}
-                                </p>
-                                {submission.latitude && submission.longitude && (
-                                  <p className="text-sm text-muted-foreground mt-1">
-                                    <MapPin className="h-4 w-4 inline mr-1" />
-                                    {submission.latitude}, {submission.longitude}
-                                  </p>
-                                )}
-                              </div>
-                              <div>
-                                <h3 className="font-semibold mb-1">Description</h3>
-                                <p className="text-sm whitespace-pre-wrap">{submission.description}</p>
-                              </div>
-                              <div>
-                                <h3 className="font-semibold mb-1">Defect Assessment</h3>
-                                <div className="grid grid-cols-3 gap-4 text-sm">
-                                  <div>
-                                    <p className="text-muted-foreground">Structural</p>
-                                    <p className="font-medium">{submission.structuralDefects}/6</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-muted-foreground">Decay</p>
-                                    <p className="font-medium">{submission.decayMagnitude}/6</p>
-                                  </div>
-                                  <div>
-                                    <p className="text-muted-foreground">Intensity</p>
-                                    <p className="font-medium">{submission.defectIntensity}/6</p>
-                                  </div>
-                                </div>
-                              </div>
-                              {submission.submittedBy && (
-                                <div>
-                                  <h3 className="font-semibold mb-1">Submitted By</h3>
-                                  <p className="text-sm">{submission.submittedBy}</p>
-                                </div>
-                              )}
-                            </div>
-                            <div>
-                              <h3 className="font-semibold mb-2">Photo</h3>
-                              <div className="aspect-video relative rounded-lg overflow-hidden border">
-                                {submission.photoUrl ? (
-                                  <Image
-                                    src={submission.photoUrl}
-                                    alt="Submitted defect"
-                                    fill
-                                    className="object-cover"
-                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                    priority={false}
-                                    unoptimized={process.env.NODE_ENV === 'development'}
-                                  />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center bg-muted">
-                                    <p className="text-muted-foreground">No photo available</p>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center gap-2"
-                        onClick={() => handleGenerateReport(submission.id)}
-                        disabled={pendingSubmissions.has(submission.id)}
-                      >
-                        <FileText className="h-4 w-4" />
-                        {pendingSubmissions.has(submission.id) ? 'Generating...' : 'Generate Report'}
-                      </Button>
-                    </div>
-                  </TableCell>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center">Loading submissions...</TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+              ) : filteredSubmissions.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center">No submissions found matching your criteria</TableCell>
+                </TableRow>
+              ) : (
+                filteredSubmissions.map((submission) => (
+                  <TableRow key={submission.id}>
+                    <TableCell className="font-medium">
+                      {submission.streetName} {submission.apartmentNumber}, {submission.city}
+                    </TableCell>
+                    <TableCell className="capitalize">{submission.type}</TableCell>
+                    <TableCell>{format(new Date(submission.date), 'dd/MM/yyyy HH:mm')}</TableCell>
+                    <TableCell className="max-w-[300px]">
+                      <p className="truncate" title={submission.description}>
+                        {submission.description || 'No description provided'}
+                      </p>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-4xl">
+                              <DialogHeader>
+                                <DialogTitle>Submission Details</DialogTitle>
+                                <DialogDescription>
+                                  Submitted on {format(new Date(submission.date), 'dd MMMM yyyy HH:mm')}
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="grid grid-cols-2 gap-6">
+                                <div className="space-y-4">
+                                  <div>
+                                    <h3 className="font-semibold mb-1">Location Details</h3>
+                                    <p className="text-sm">
+                                      {submission.streetName} {submission.apartmentNumber}
+                                      <br />
+                                      {submission.city}
+                                    </p>
+                                    {submission.latitude && submission.longitude && (
+                                      <p className="text-sm text-muted-foreground mt-1">
+                                        <MapPin className="h-4 w-4 inline mr-1" />
+                                        {submission.latitude}, {submission.longitude}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <h3 className="font-semibold mb-1">Description</h3>
+                                    <p className="text-sm whitespace-pre-wrap">{submission.description}</p>
+                                  </div>
+                                  <div>
+                                    <h3 className="font-semibold mb-1">Defect Assessment</h3>
+                                    <div className="grid grid-cols-3 gap-4 text-sm">
+                                      <div>
+                                        <p className="text-muted-foreground">Structural</p>
+                                        <p className="font-medium">{submission.structuralDefects}/6</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-muted-foreground">Decay</p>
+                                        <p className="font-medium">{submission.decayMagnitude}/6</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-muted-foreground">Intensity</p>
+                                        <p className="font-medium">{submission.defectIntensity}/6</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div>
+                                  <h3 className="font-semibold mb-2">Photo</h3>
+                                  <div className="aspect-video relative rounded-lg overflow-hidden border">
+                                    {submission.photoUrl ? (
+                                      <Image
+                                        src={submission.photoUrl}
+                                        alt="Submitted defect"
+                                        fill
+                                        className="object-cover"
+                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                        priority={false}
+                                        unoptimized={process.env.NODE_ENV === 'development'}
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center bg-muted">
+                                        <p className="text-muted-foreground">No photo available</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleGenerateReport(submission.id)}
+                            disabled={pendingSubmissions.has(submission.id)}
+                          >
+                            <FileText className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       </div>
-    </div>
-  )
+    )
 }
 
