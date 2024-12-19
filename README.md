@@ -23,7 +23,8 @@ This repository contains the code for the Data Intrapreneurship in Action (DIiA)
 - npm (v10.9.0 or later)
 - Git
 
-### Installation
+### Installation and running the platform
+The deployed version of the platform is the Beta version, not functioning 100% correctly. For the best experience when checking the platform's usability, please follow these steps:
 
 1. Clone the repository
 git clone https://github.com/patrykslomka/DIiA_team4
@@ -37,12 +38,15 @@ npm run dev
 ## Login details
 ### Tenant-side
 tenant@kw.com
+
 pass
 
 ### Employee-side
 employee@kw.com
+
 employee
 
 ### Admin-side
 kevin@kw.com
+
 admin
