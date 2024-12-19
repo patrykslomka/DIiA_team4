@@ -9,7 +9,7 @@ This repository contains the code for the Data Intrapreneurship in Action (DIiA)
 - Tenant portal for submitting property condition reports
 - Employee interface for property inspections
 - Admin dashboard for managing submissions and generating reports
-- Integration with NEN2767 standards for condition assessment
+- Integration with NEN2767 standards for condition assessment (generated reports can be found in public/reports)
 - Photo comparison functionality for accurate reporting
 - Geolocation capture for precise issue tracking
 
