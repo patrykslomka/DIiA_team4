@@ -2,9 +2,7 @@
 
 ## About the Project
 
-This repository contains the code for the Data Intrapreneurship in Action (DIiA) course project at JADS. The KleurijkWonen Platform is a web application designed to manage and assess property conditions for tenants and employees.
-
-[Click here to access the platform](https://klikfitz.nl/)
+This repository contains the code for the Data Intrapreneurship in Action (DIiA) course project at JADS. The KleurijkWonen Platform is a web application designed to assess property conditions for tenants and employees.
 
 ## Features
 
@@ -24,7 +22,7 @@ This repository contains the code for the Data Intrapreneurship in Action (DIiA)
 - Git
 
 ### Installation and running the platform
-The deployed version of the platform is the Beta version, not functioning 100% correctly. For the best experience when checking the platform's usability, please follow these steps:
+The deployed version of the platform is the Beta version (klikflitz.nl), not functioning 100% correctly. For the best experience when checking the platform's usability, please follow these steps:
 
 1. Clone the repository
 git clone https://github.com/patrykslomka/DIiA_team4
